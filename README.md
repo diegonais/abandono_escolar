@@ -187,6 +187,75 @@ SELECT id, name FROM roles ORDER BY name;
 
 El modulo no realiza eliminacion fisica. La desactivacion actualiza `isActive=false`.
 
+## Modulos Academicos Base (backend)
+
+### Roles por accion
+- `ADMIN`: crear, editar y desactivar (y eliminar en `Courses`).
+- `DIRECTOR`: listar y consultar detalle.
+- `DOCENTE`: listar.
+- `SEGUIMIENTO`: listar.
+
+### SchoolYears (`/school-years`)
+- `GET /school-years?page=1&limit=10`
+- `GET /school-years?page=1&limit=10&isActive=true`
+- `GET /school-years/:id`
+- `POST /school-years`
+- `PATCH /school-years/:id`
+- `PATCH /school-years/:id/deactivate`
+
+Payload ejemplo `POST /school-years`:
+
+```json
+{
+  "name": "Gestion 2027",
+  "startDate": "2027-01-15",
+  "endDate": "2027-12-15",
+  "isActive": true
+}
+```
+
+### Courses (`/courses`)
+- `GET /courses?page=1&limit=10`
+- `GET /courses?page=1&limit=10&schoolYearId=<uuid>`
+- `GET /courses/:id`
+- `POST /courses`
+- `PATCH /courses/:id`
+- `DELETE /courses/:id`
+
+Regla: no se permite duplicar `level + parallel + schoolYearId`.
+
+Payload ejemplo `POST /courses`:
+
+```json
+{
+  "level": "4to Secundaria",
+  "parallel": "A",
+  "schoolYearId": "UUID_DE_GESTION"
+}
+```
+
+### Subjects (`/subjects`)
+- `GET /subjects?page=1&limit=10`
+- `GET /subjects?page=1&limit=10&isActive=true`
+- `GET /subjects/:id`
+- `POST /subjects`
+- `PATCH /subjects/:id`
+- `PATCH /subjects/:id/deactivate`
+
+Reglas:
+- no se permiten nombres duplicados de materia.
+- `code` es opcional.
+
+Payload ejemplo `POST /subjects`:
+
+```json
+{
+  "name": "Fisica",
+  "code": "FIS",
+  "isActive": true
+}
+```
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -281,6 +350,29 @@ SELECT
 FROM users u
 INNER JOIN roles r ON r.id = u."roleId"
 ORDER BY u."createdAt" DESC;
+```
+
+Para verificar datos de modulos academicos desde TablePlus:
+
+```sql
+SELECT id, name, "startDate", "endDate", "isActive"
+FROM school_years
+ORDER BY "startDate" DESC;
+
+SELECT
+  c.id,
+  c.level,
+  c.parallel,
+  c."schoolYearId",
+  sy.name AS school_year_name,
+  c."createdAt"
+FROM courses c
+INNER JOIN school_years sy ON sy.id = c."schoolYearId"
+ORDER BY sy."startDate" DESC, c.level ASC, c.parallel ASC;
+
+SELECT id, name, code, "isActive", "createdAt", "updatedAt"
+FROM subjects
+ORDER BY name ASC;
 ```
 
 ## Scripts utiles backend
