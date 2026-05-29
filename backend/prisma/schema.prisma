@@ -7,12 +7,302 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo inicial minimo para comprobar conexion y migraciones.
-model Student {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique
-  firstName String
-  lastName  String
+enum RoleName {
+  ADMIN
+  DIRECTOR
+  DOCENTE
+  SEGUIMIENTO
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  JUSTIFIED
+}
+
+enum FollowUpType {
+  ACADEMIC
+  ATTENDANCE
+  BEHAVIORAL
+  FAMILY
+  SOCIAL
+  PSYCHOLOGICAL
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+enum AcademicPeriod {
+  FIRST_TERM
+  SECOND_TERM
+  THIRD_TERM
+  FINAL
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      RoleName @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  isActive     Boolean  @default(true)
+  roleId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  role              Role              @relation(fields: [roleId], references: [id])
+  responsibleForFup StudentFollowUp[]
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model SchoolYear {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courses     Course[]
+  enrollments Enrollment[]
+  evaluations RiskEvaluation[]
+  alerts      Alert[]
+
+  @@map("school_years")
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  level        String
+  parallel     String
+  schoolYearId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  schoolYear  SchoolYear   @relation(fields: [schoolYearId], references: [id])
+  enrollments Enrollment[]
+  attendances Attendance[]
+  grades      Grade[]
+
+  @@unique([level, parallel, schoolYearId])
+  @@index([schoolYearId])
+  @@map("courses")
+}
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String
+  code      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grades Grade[]
+
+  @@unique([code])
+  @@map("subjects")
+}
+
+model Student {
+  id         String    @id @default(uuid())
+  firstName  String
+  lastName   String
+  ci         String?   @unique
+  birthDate  DateTime?
+  gender     String?
+  tutorName  String?
+  tutorPhone String?
+  address    String?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  enrollments Enrollment[]
+  attendances Attendance[]
+  grades      Grade[]
+  followUps   StudentFollowUp[]
+  evaluations RiskEvaluation[]
+  alerts      Alert[]
+
+  @@map("students")
+}
+
+model Enrollment {
+  id           String   @id @default(uuid())
+  studentId    String
+  courseId     String
+  schoolYearId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  course     Course     @relation(fields: [courseId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+
+  @@unique([studentId, courseId, schoolYearId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([schoolYearId])
+  @@map("enrollments")
+}
+
+model Attendance {
+  id          String           @id @default(uuid())
+  date        DateTime
+  status      AttendanceStatus
+  observation String?
+  studentId   String
+  courseId    String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course  @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, date, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([date])
+  @@index([status])
+  @@index([studentId, courseId, date, status])
+  @@map("attendances")
+}
+
+model Grade {
+  id        String         @id @default(uuid())
+  score     Decimal        @db.Decimal(5, 2)
+  period    AcademicPeriod
+  studentId String
+  subjectId String
+  courseId  String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+  course  Course  @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, subjectId, courseId, period])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([courseId])
+  @@index([period])
+  @@index([studentId, subjectId, courseId, period])
+  @@map("grades")
+}
+
+model StudentFollowUp {
+  id                String       @id @default(uuid())
+  type              FollowUpType
+  description       String
+  actionTaken       String?
+  followUpDate      DateTime
+  nextReviewDate    DateTime?
+  studentId         String
+  responsibleUserId String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  student         Student @relation(fields: [studentId], references: [id])
+  responsibleUser User    @relation(fields: [responsibleUserId], references: [id])
+
+  @@index([studentId])
+  @@index([type])
+  @@index([followUpDate])
+  @@index([studentId, type, followUpDate])
+  @@map("student_follow_ups")
+}
+
+model RiskCriterion {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  description String?
+  metric      String
+  minValue    Decimal? @db.Decimal(8, 2)
+  maxValue    Decimal? @db.Decimal(8, 2)
+  weight      Decimal  @default(1.00) @db.Decimal(5, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([metric])
+  @@index([isActive])
+  @@map("risk_criteria")
+}
+
+model RiskEvaluation {
+  id             String    @id @default(uuid())
+  studentId      String
+  schoolYearId   String
+  riskLevel      RiskLevel
+  riskScore      Decimal?  @db.Decimal(6, 2)
+  attendanceRate Decimal?  @db.Decimal(5, 2)
+  averageGrade   Decimal?  @db.Decimal(5, 2)
+  totalAbsences  Int?
+  indicators     Json?
+  evaluatedAt    DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  schoolYear SchoolYear @relation(fields: [schoolYearId], references: [id])
+  alerts     Alert[]
+
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([createdAt])
+  @@index([studentId, riskLevel, createdAt])
+  @@index([schoolYearId])
+  @@map("risk_evaluations")
+}
+
+model Alert {
+  id               String      @id @default(uuid())
+  title            String
+  description      String
+  riskLevel        RiskLevel
+  status           AlertStatus
+  studentId        String
+  schoolYearId     String
+  riskEvaluationId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  student        Student         @relation(fields: [studentId], references: [id])
+  schoolYear     SchoolYear      @relation(fields: [schoolYearId], references: [id])
+  riskEvaluation RiskEvaluation? @relation(fields: [riskEvaluationId], references: [id])
+
+  @@index([studentId])
+  @@index([riskLevel])
+  @@index([status])
+  @@index([studentId, riskLevel, status])
+  @@index([schoolYearId])
+  @@index([riskEvaluationId])
+  @@map("alerts")
 }

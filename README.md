@@ -70,6 +70,10 @@ cd backend
 npm run prisma:migrate
 ```
 
+La primera migracion del proyecto crea el esquema inicial (`init_schema`) con tablas como:
+`roles`, `users`, `school_years`, `courses`, `subjects`, `students`, `enrollments`,
+`attendances`, `grades`, `student_follow_ups`, `risk_criteria`, `risk_evaluations` y `alerts`.
+
 ## Generar Prisma Client
 
 ```bash
@@ -116,6 +120,7 @@ Pasos:
 2. En TablePlus, crear una nueva conexion PostgreSQL.
 3. Completar los datos y presionar `Test`.
 4. Guardar y abrir la base.
+5. Revisar las tablas del esquema inicial generadas por Prisma (seccion `public`).
 
 ## Scripts utiles backend
 En `backend/package.json`:
