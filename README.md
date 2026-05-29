@@ -105,6 +105,40 @@ Respuesta:
 }
 ```
 
+## Ejecutar seed inicial (Prisma)
+
+Desde `backend/`:
+
+```bash
+yarn prisma:seed
+```
+
+Si usas npm:
+
+```bash
+npm run prisma:seed
+```
+
+El seed crea y actualiza (idempotente) los siguientes datos de prueba:
+
+- Roles: `ADMIN`, `DIRECTOR`, `DOCENTE`, `SEGUIMIENTO`.
+- Usuario administrador:
+  - Email: `admin@abandono.test`
+  - Password: `Admin123456`
+  - Full name: `Administrador del Sistema`
+  - Rol: `ADMIN`
+- Gestion escolar actual: `Gestion {anio_actual}`.
+- Cursos: `1ro A Secundaria`, `2do A Secundaria`, `3ro A Secundaria`.
+- Materias: `Matematica`, `Lenguaje`, `Ciencias Sociales`, `Ciencias Naturales`.
+- 10 estudiantes ficticios con inscripciones.
+- Asistencias de ejemplo.
+- Calificaciones de ejemplo.
+- Seguimientos de ejemplo.
+- Criterios basicos de riesgo:
+  - `faltas >= 3`
+  - `promedio < 51`
+  - `seguimientos >= 2`
+
 ## Abrir la base de datos en TablePlus
 Crear una nueva conexion PostgreSQL con:
 
@@ -121,6 +155,21 @@ Pasos:
 3. Completar los datos y presionar `Test`.
 4. Guardar y abrir la base.
 5. Revisar las tablas del esquema inicial generadas por Prisma (seccion `public`).
+6. Ejecutar consultas rapidas para verificar registros:
+
+```sql
+SELECT COUNT(*) FROM roles;
+SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM school_years;
+SELECT COUNT(*) FROM courses;
+SELECT COUNT(*) FROM subjects;
+SELECT COUNT(*) FROM students;
+SELECT COUNT(*) FROM enrollments;
+SELECT COUNT(*) FROM attendances;
+SELECT COUNT(*) FROM grades;
+SELECT COUNT(*) FROM student_follow_ups;
+SELECT COUNT(*) FROM risk_criteria;
+```
 
 ## Scripts utiles backend
 En `backend/package.json`:
@@ -128,5 +177,6 @@ En `backend/package.json`:
 - `npm run start:dev`
 - `npm run prisma:generate`
 - `npm run prisma:migrate`
+- `npm run prisma:seed`
 - `npm run prisma:studio`
 - `npm run prisma:format`
