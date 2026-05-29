@@ -130,6 +130,63 @@ Respuesta:
 6. En `Authorization` elegir `Bearer Token` y pegar el `accessToken`.
 7. Verificar que retorna datos basicos del usuario: `id`, `fullName`, `email`, `role`.
 
+## Modulo Users (backend)
+
+### Requisitos previos para probar
+1. Ejecutar seed para tener roles y usuario ADMIN:
+
+```bash
+cd backend
+yarn prisma:seed
+```
+
+2. Hacer login con `POST /auth/login` y copiar `accessToken`.
+3. Usar `Authorization: Bearer <token>` en todos los endpoints de `/users`.
+
+### Endpoints disponibles
+- `GET /users?page=1&limit=10`
+- `GET /users?page=1&limit=10&roleId=<uuid_rol>`
+- `GET /users?page=1&limit=10&roleName=ADMIN`
+- `GET /users/:id`
+- `POST /users`
+- `PATCH /users/:id`
+- `PATCH /users/:id/deactivate`
+- `PATCH /users/:id/activate`
+
+Para obtener `roleId` antes de crear usuario, usar:
+
+```sql
+SELECT id, name FROM roles ORDER BY name;
+```
+
+### Ejemplo crear usuario (ADMIN)
+`POST /users`
+
+```json
+{
+  "email": "docente1@abandono.test",
+  "fullName": "Docente Uno",
+  "password": "Docente123",
+  "roleId": "UUID_DEL_ROL_DOCENTE"
+}
+```
+
+### Ejemplo actualizar usuario (ADMIN)
+`PATCH /users/:id`
+
+```json
+{
+  "fullName": "Docente Uno Actualizado",
+  "email": "docente1.actualizado@abandono.test"
+}
+```
+
+### Ejemplo desactivar y activar (ADMIN)
+- `PATCH /users/:id/deactivate`
+- `PATCH /users/:id/activate`
+
+El modulo no realiza eliminacion fisica. La desactivacion actualiza `isActive=false`.
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -208,6 +265,22 @@ SELECT
 FROM users u
 INNER JOIN roles r ON r.id = u."roleId"
 ORDER BY u.email;
+```
+
+Para verificar usuarios activos/inactivos creados desde el modulo `Users`:
+
+```sql
+SELECT
+  u.id,
+  u.email,
+  u."fullName",
+  u."isActive",
+  r.name AS role_name,
+  u."createdAt",
+  u."updatedAt"
+FROM users u
+INNER JOIN roles r ON r.id = u."roleId"
+ORDER BY u."createdAt" DESC;
 ```
 
 ## Scripts utiles backend
