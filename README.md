@@ -61,6 +61,7 @@ Variables esperadas (`backend/.env`):
 ```env
 DATABASE_URL="postgresql://abandono_user:abandono_pass@localhost:5434/abandono_escolar_db?schema=public"
 PORT=3000
+JWT_SECRET="cambia_este_secreto_jwt_en_desarrollo"
 ```
 
 ## Correr migraciones (Prisma)
@@ -89,6 +90,7 @@ npm run start:dev
 ```
 
 API local: `http://localhost:3000`
+Swagger: `http://localhost:3000/docs`
 
 Endpoint de salud:
 
@@ -104,6 +106,29 @@ Respuesta:
   "service": "abandono-escolar-api"
 }
 ```
+
+## Autenticacion JWT (backend)
+
+### Endpoints
+- `POST /auth/login`
+- `GET /auth/me` (protegido con Bearer Token)
+
+### Probar login en Postman
+1. Levantar backend con `npm run start:dev` desde `backend/`.
+2. Crear request `POST http://localhost:3000/auth/login`.
+3. En `Body` usar `raw` + `JSON`:
+
+```json
+{
+  "email": "admin@abandono.test",
+  "password": "Admin123456"
+}
+```
+
+4. En la respuesta copiar `accessToken`.
+5. Crear request `GET http://localhost:3000/auth/me`.
+6. En `Authorization` elegir `Bearer Token` y pegar el `accessToken`.
+7. Verificar que retorna datos basicos del usuario: `id`, `fullName`, `email`, `role`.
 
 ## Ejecutar seed inicial (Prisma)
 
@@ -169,6 +194,20 @@ SELECT COUNT(*) FROM attendances;
 SELECT COUNT(*) FROM grades;
 SELECT COUNT(*) FROM student_follow_ups;
 SELECT COUNT(*) FROM risk_criteria;
+```
+
+Para revisar usuarios con sus roles:
+
+```sql
+SELECT
+  u.id,
+  u.email,
+  u."fullName",
+  u."isActive",
+  r.name AS role
+FROM users u
+INNER JOIN roles r ON r.id = u."roleId"
+ORDER BY u.email;
 ```
 
 ## Scripts utiles backend
