@@ -15,10 +15,10 @@ enum RoleName {
 }
 
 enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
-  JUSTIFIED
+  PRESENTE
+  FALTA
+  ATRASO
+  JUSTIFICADO
 }
 
 enum FollowUpType {

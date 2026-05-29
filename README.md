@@ -333,6 +333,113 @@ Payload ejemplo `PATCH /enrollments/:id/status`:
 4. Crear inscripcion con `POST /enrollments` usando el `id` del estudiante creado.
 5. Verificar el resultado con `GET /students?search=<ci_o_nombre>` y `GET /enrollments/by-student/:studentId`.
 
+## Modulo Attendance (backend)
+
+### Roles por accion
+- `DOCENTE`: registra asistencias (`POST /attendance`, `POST /attendance/bulk`).
+- `ADMIN`: registra y corrige asistencias (`POST`, `POST /bulk`, `PATCH`).
+- `DIRECTOR`: consulta asistencias.
+- `SEGUIMIENTO`: consulta asistencias.
+
+### Endpoints disponibles
+- `POST /attendance`
+- `POST /attendance/bulk`
+- `GET /attendance`
+- `GET /attendance/by-student/:studentId`
+- `GET /attendance/by-course/:courseId`
+- `PATCH /attendance/:id`
+- `GET /attendance/summary/student/:studentId`
+
+### Estados validos de asistencia
+- `PRESENTE`
+- `FALTA`
+- `ATRASO`
+- `JUSTIFICADO`
+
+### Reglas de negocio
+- No se permiten fechas futuras.
+- No se permiten duplicados para la combinacion `studentId + courseId + date`.
+- En carga masiva (`bulk`) tambien se valida que no haya duplicados dentro del lote.
+
+### Filtros disponibles en listados
+Se aplican en `GET /attendance`, `GET /attendance/by-student/:studentId` y
+`GET /attendance/by-course/:courseId`:
+- `dateFrom`
+- `dateTo`
+- `courseId`
+- `studentId`
+- `status`
+
+Ejemplo:
+`GET /attendance?dateFrom=2026-05-01&dateTo=2026-05-31&courseId=<uuid>&status=FALTA`
+
+### Ejemplo registrar asistencia individual
+`POST /attendance`
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "courseId": "UUID_CURSO",
+  "date": "2026-05-20",
+  "status": "PRESENTE",
+  "observation": "Ingreso puntual."
+}
+```
+
+### Ejemplo registrar asistencia por lote
+`POST /attendance/bulk`
+
+```json
+[
+  {
+    "studentId": "UUID_ESTUDIANTE_1",
+    "courseId": "UUID_CURSO",
+    "date": "2026-05-20",
+    "status": "PRESENTE"
+  },
+  {
+    "studentId": "UUID_ESTUDIANTE_2",
+    "courseId": "UUID_CURSO",
+    "date": "2026-05-20",
+    "status": "ATRASO",
+    "observation": "Ingreso 10 minutos tarde."
+  }
+]
+```
+
+### Ejemplo corregir asistencia
+`PATCH /attendance/:id`
+
+```json
+{
+  "status": "JUSTIFICADO",
+  "observation": "Falta justificada con certificado."
+}
+```
+
+### Resumen por estudiante
+Endpoint: `GET /attendance/summary/student/:studentId`
+
+Filtros opcionales:
+- `dateFrom`
+- `dateTo`
+
+Respuesta esperada:
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "totalPresentes": 15,
+  "totalFaltas": 2,
+  "totalAtrasos": 1,
+  "totalJustificados": 1,
+  "rangoUsado": {
+    "dateFrom": "2026-05-01",
+    "dateTo": "2026-05-31"
+  }
+}
+```
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -481,6 +588,37 @@ INNER JOIN students s ON s.id = e."studentId"
 INNER JOIN courses c ON c.id = e."courseId"
 INNER JOIN school_years sy ON sy.id = e."schoolYearId"
 ORDER BY e."createdAt" DESC;
+```
+
+Para verificar asistencias desde TablePlus:
+
+```sql
+SELECT
+  a.id,
+  a.date,
+  a.status,
+  a.observation,
+  a."createdAt",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  c.level || ' ' || c.parallel AS course_name
+FROM attendances a
+INNER JOIN students s ON s.id = a."studentId"
+INNER JOIN courses c ON c.id = a."courseId"
+ORDER BY a.date DESC, a."createdAt" DESC;
+```
+
+Para revisar resumen rapido por estudiante desde SQL:
+
+```sql
+SELECT
+  a."studentId",
+  COUNT(*) FILTER (WHERE a.status = 'PRESENTE') AS total_presentes,
+  COUNT(*) FILTER (WHERE a.status = 'FALTA') AS total_faltas,
+  COUNT(*) FILTER (WHERE a.status = 'ATRASO') AS total_atrasos,
+  COUNT(*) FILTER (WHERE a.status = 'JUSTIFICADO') AS total_justificados
+FROM attendances a
+WHERE a."studentId" = 'UUID_ESTUDIANTE'
+GROUP BY a."studentId";
 ```
 
 ## Scripts utiles backend

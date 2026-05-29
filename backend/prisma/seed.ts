@@ -281,8 +281,8 @@ async function main() {
       const missedDays = index % 4 === 0 ? 3 : index % 3 === 0 ? 2 : 1;
       const status =
         attendanceOffset < missedDays
-          ? AttendanceStatus.ABSENT
-          : AttendanceStatus.PRESENT;
+          ? AttendanceStatus.FALTA
+          : AttendanceStatus.PRESENTE;
 
       await prisma.attendance.upsert({
         where: {
@@ -294,14 +294,14 @@ async function main() {
         },
         update: {
           status,
-          observation: status === AttendanceStatus.ABSENT ? 'Falta registrada en seed' : null,
+          observation: status === AttendanceStatus.FALTA ? 'Falta registrada en seed' : null,
         },
         create: {
           studentId: student.id,
           courseId: assignedCourse.id,
           date: attendanceDate,
           status,
-          observation: status === AttendanceStatus.ABSENT ? 'Falta registrada en seed' : null,
+          observation: status === AttendanceStatus.FALTA ? 'Falta registrada en seed' : null,
         },
       });
     }
