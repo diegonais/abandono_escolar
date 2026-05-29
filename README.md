@@ -1,10 +1,10 @@
-﻿# abandono_escolar
+# abandono_escolar
 
 Sistema web para la identificacion temprana del riesgo de abandono escolar en estudiantes de secundaria de unidades educativas fiscales.
 
 ## Stack
 - Backend: NestJS + TypeScript + Prisma + PostgreSQL
-- Frontend: React + Vite + TypeScript + Tailwind CSS + shadcn/ui + Recharts
+- Frontend: React + Vite + TypeScript
 - Base de datos: PostgreSQL (Docker)
 - Gestor visual recomendado: TablePlus
 
@@ -13,38 +13,25 @@ Sistema web para la identificacion temprana del riesgo de abandono escolar en es
 ```text
 abandono_escolar/
   docker-compose.yml
-  .gitignore
   README.md
-  AGENTS.md
   backend/
   frontend/
 ```
 
-## Requisitos previos
-- Node.js 20+
-- npm 10+
-- Docker Desktop
-- TablePlus (opcional, para gestion visual de BD)
-
-## 1) Instalar dependencias
+## Levantar PostgreSQL con Docker
 Desde la raiz del proyecto:
-
-```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-## 2) Levantar PostgreSQL (Docker)
-Desde la raiz:
 
 ```bash
 docker compose up -d
 ```
 
-Ver logs (opcional):
+Verificar estado:
+
+```bash
+docker compose ps
+```
+
+Ver logs:
 
 ```bash
 docker compose logs -f postgres
@@ -56,50 +43,66 @@ Detener servicio:
 docker compose down
 ```
 
-## 3) Configurar variables de entorno
-
-Backend:
+## Configurar backend
 
 ```bash
 cd backend
-cp .env.example .env
+npm install
 ```
 
-Frontend:
+Si no existe `.env`, crearlo desde `.env.example`:
 
 ```bash
-cd frontend
 cp .env.example .env
 ```
 
-## 4) Preparar Prisma
+Variables esperadas (`backend/.env`):
+
+```env
+DATABASE_URL="postgresql://abandono_user:abandono_pass@localhost:5434/abandono_escolar_db?schema=public"
+PORT=3000
+```
+
+## Correr migraciones (Prisma)
 
 ```bash
 cd backend
-npx prisma generate
-npx prisma migrate dev --name init
+npm run prisma:migrate
 ```
 
-## 5) Levantar backend
+## Generar Prisma Client
+
+```bash
+cd backend
+npm run prisma:generate
+```
+
+## Levantar el backend
 
 ```bash
 cd backend
 npm run start:dev
 ```
 
-API local esperada: `http://localhost:3000`
+API local: `http://localhost:3000`
 
-## 6) Levantar frontend
+Endpoint de salud:
 
-```bash
-cd frontend
-npm run dev
+```http
+GET /health
 ```
 
-App web local esperada: `http://localhost:5173`
+Respuesta:
 
-## Conexión con TablePlus
-Crear una nueva conexion PostgreSQL con estos datos:
+```json
+{
+  "status": "ok",
+  "service": "abandono-escolar-api"
+}
+```
+
+## Abrir la base de datos en TablePlus
+Crear una nueva conexion PostgreSQL con:
 
 - Host: `localhost`
 - Port: `5434`
@@ -108,19 +111,17 @@ Crear una nueva conexion PostgreSQL con estos datos:
 - Database: `abandono_escolar_db`
 - SSL: `Disable`
 
-Prueba de conexion:
-1. Asegura que el contenedor este activo (`docker compose ps`).
-2. En TablePlus, presiona `Test`.
-3. Guarda la conexion y abre la base de datos.
+Pasos:
+1. Verificar que PostgreSQL este activo (`docker compose ps`).
+2. En TablePlus, crear una nueva conexion PostgreSQL.
+3. Completar los datos y presionar `Test`.
+4. Guardar y abrir la base.
 
-## Scripts principales
+## Scripts utiles backend
+En `backend/package.json`:
 
-Backend (`backend/package.json`):
-- `npm run start:dev` inicia Nest en modo desarrollo.
-- `npm run build` compila TypeScript.
-- `npm run prisma:studio` abre Prisma Studio.
-
-Frontend (`frontend/package.json`):
-- `npm run dev` inicia Vite.
-- `npm run build` compila frontend.
-- `npm run preview` previsualiza build.
+- `npm run start:dev`
+- `npm run prisma:generate`
+- `npm run prisma:migrate`
+- `npm run prisma:studio`
+- `npm run prisma:format`

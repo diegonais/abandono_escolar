@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "backend",
   "version": "0.0.1",
   "private": true,
@@ -11,7 +11,8 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:format": "prisma format"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.8",
