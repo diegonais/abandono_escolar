@@ -51,6 +51,11 @@ enum AcademicPeriod {
   FINAL
 }
 
+enum EnrollmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model Role {
   id        String   @id @default(uuid())
   name      RoleName @unique
@@ -157,6 +162,7 @@ model Enrollment {
   studentId    String
   courseId     String
   schoolYearId String
+  status       EnrollmentStatus @default(ACTIVE)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -168,6 +174,7 @@ model Enrollment {
   @@index([studentId])
   @@index([courseId])
   @@index([schoolYearId])
+  @@index([status])
   @@map("enrollments")
 }
 

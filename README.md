@@ -256,6 +256,83 @@ Payload ejemplo `POST /subjects`:
 }
 ```
 
+## Modulos Students y Enrollments (backend)
+
+### Roles por accion
+- `ADMIN`: crea, actualiza, activa/desactiva estudiantes y gestiona inscripciones/estado.
+- `DIRECTOR`: consulta estudiantes e inscripciones.
+- `DOCENTE`: consulta estudiantes e inscripciones (incluyendo por curso).
+- `SEGUIMIENTO`: consulta estudiantes e inscripciones.
+
+### Students (`/students`)
+- `GET /students?page=1&limit=10`
+- `GET /students?page=1&limit=10&search=<texto>`
+- `GET /students?page=1&limit=10&search=<texto>&isActive=true`
+- `GET /students/:id`
+- `POST /students`
+- `PATCH /students/:id`
+- `PATCH /students/:id/deactivate`
+- `PATCH /students/:id/activate`
+
+Reglas:
+- No hay eliminacion fisica de estudiantes.
+- La baja logica se realiza con `isActive=false`.
+- Busqueda por `firstName`, `lastName` o `ci` (case-insensitive).
+
+Payload ejemplo `POST /students`:
+
+```json
+{
+  "firstName": "Maria",
+  "lastName": "Quispe",
+  "ci": "12345678",
+  "birthDate": "2010-05-21",
+  "gender": "F",
+  "tutorName": "Juana Mamani",
+  "tutorPhone": "+59170000000",
+  "address": "Zona central, calle 10",
+  "isActive": true
+}
+```
+
+### Enrollments (`/enrollments`)
+- `POST /enrollments`
+- `GET /enrollments?page=1&limit=10`
+- `GET /enrollments?page=1&limit=10&schoolYearId=<uuid>&status=ACTIVE`
+- `GET /enrollments/by-course/:courseId?page=1&limit=10`
+- `GET /enrollments/by-student/:studentId?page=1&limit=10`
+- `PATCH /enrollments/:id/status`
+
+Reglas:
+- No se permite inscripcion duplicada para la combinacion `studentId + courseId + schoolYearId`.
+- El estado de la inscripcion se controla con `status` (`ACTIVE` o `INACTIVE`).
+
+Payload ejemplo `POST /enrollments`:
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "courseId": "UUID_CURSO",
+  "schoolYearId": "UUID_GESTION",
+  "status": "ACTIVE"
+}
+```
+
+Payload ejemplo `PATCH /enrollments/:id/status`:
+
+```json
+{
+  "status": "INACTIVE"
+}
+```
+
+### Flujo sugerido: crear estudiante e inscribir
+1. Login con `POST /auth/login` y usar Bearer Token de un usuario `ADMIN`.
+2. Crear estudiante con `POST /students`.
+3. Obtener `courseId` y `schoolYearId` desde `GET /courses` o desde TablePlus.
+4. Crear inscripcion con `POST /enrollments` usando el `id` del estudiante creado.
+5. Verificar el resultado con `GET /students?search=<ci_o_nombre>` y `GET /enrollments/by-student/:studentId`.
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -373,6 +450,37 @@ ORDER BY sy."startDate" DESC, c.level ASC, c.parallel ASC;
 SELECT id, name, code, "isActive", "createdAt", "updatedAt"
 FROM subjects
 ORDER BY name ASC;
+```
+
+Para verificar estudiantes e inscripciones desde TablePlus:
+
+```sql
+SELECT
+  s.id,
+  s."firstName",
+  s."lastName",
+  s.ci,
+  s."isActive",
+  s."createdAt",
+  s."updatedAt"
+FROM students s
+ORDER BY s."createdAt" DESC;
+
+SELECT
+  e.id,
+  e."studentId",
+  e."courseId",
+  e."schoolYearId",
+  e.status,
+  e."createdAt",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  c.level || ' ' || c.parallel AS course_name,
+  sy.name AS school_year_name
+FROM enrollments e
+INNER JOIN students s ON s.id = e."studentId"
+INNER JOIN courses c ON c.id = e."courseId"
+INNER JOIN school_years sy ON sy.id = e."schoolYearId"
+ORDER BY e."createdAt" DESC;
 ```
 
 ## Scripts utiles backend
