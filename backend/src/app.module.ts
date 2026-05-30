@@ -8,6 +8,7 @@ import { CoursesModule } from "./courses/courses.module";
 import { EnrollmentsModule } from "./enrollments/enrollments.module";
 import { GradesModule } from "./grades/grades.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { ReportsModule } from "./reports/reports.module";
 import { RiskEngineModule } from "./risk-engine/risk-engine.module";
 import { SchoolYearsModule } from "./school-years/school-years.module";
 import { StudentFollowUpsModule } from "./student-follow-ups/student-follow-ups.module";
@@ -31,6 +32,7 @@ import { UsersModule } from "./users/users.module";
     EnrollmentsModule,
     GradesModule,
     RiskEngineModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [],

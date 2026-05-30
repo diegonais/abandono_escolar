@@ -744,6 +744,28 @@ Respuesta esperada:
 }
 ```
 
+## Modulo Reports (backend)
+
+### Roles por acceso
+- `ADMIN`, `DIRECTOR`, `SEGUIMIENTO`: acceso completo al modulo.
+- `DOCENTE`: acceso habilitado a reportes generales para simplificar el prototipo.
+
+### Endpoints disponibles
+- `GET /reports/students-at-risk`
+- `GET /reports/course/:courseId/risk-summary`
+- `GET /reports/student/:studentId/full`
+- `GET /reports/dashboard`
+
+### Descripcion de reportes
+- `GET /reports/students-at-risk`: lista estudiantes activos con datos basicos, ultimo nivel de riesgo, indicadores activos y estado de alerta.
+- `GET /reports/course/:courseId/risk-summary`: resumen de un curso con `totalEstudiantes`, `totalRiesgoBajo`, `totalRiesgoMedio`, `totalRiesgoAlto`, `totalSinRiesgo`.
+- `GET /reports/student/:studentId/full`: reporte completo por estudiante con curso actual, resumen de asistencia, resumen de calificaciones, seguimientos recientes, ultima evaluacion de riesgo y alertas activas.
+- `GET /reports/dashboard`: KPIs generales (`totalEstudiantes`, `estudiantesConRiesgo`, `alertasPendientes`, `promedioGeneral`, `estudiantesConAsistenciaIrregular`, `estudiantesConBajoRendimiento`, `distribucionRiesgo`).
+
+### Swagger
+- Documentacion disponible en `http://localhost:3000/docs` (tag `reports`).
+- Todos los endpoints de reportes requieren `Authorization: Bearer <token>`.
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -992,6 +1014,52 @@ FROM alerts a
 INNER JOIN students s ON s.id = a."studentId"
 INNER JOIN school_years sy ON sy.id = a."schoolYearId"
 ORDER BY a."createdAt" DESC;
+```
+
+Para verificar informacion base usada por reportes desde TablePlus:
+
+```sql
+-- Ultima evaluacion de riesgo por estudiante
+SELECT DISTINCT ON (re."studentId")
+  re."studentId",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  re."riskLevel",
+  re."riskScore",
+  re."attendanceRate",
+  re."averageGrade",
+  re."totalAbsences",
+  re."evaluatedAt",
+  re.indicators
+FROM risk_evaluations re
+INNER JOIN students s ON s.id = re."studentId"
+ORDER BY re."studentId", re."evaluatedAt" DESC;
+
+-- Alertas activas para seguimiento (PENDIENTE o EN_REVISION)
+SELECT
+  a.id,
+  a."studentId",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  a.status,
+  a."riskLevel",
+  a."createdAt"
+FROM alerts a
+INNER JOIN students s ON s.id = a."studentId"
+WHERE a.status IN ('PENDIENTE', 'EN_REVISION')
+ORDER BY a."createdAt" DESC;
+
+-- Resumen de riesgo por curso (base para /reports/course/:courseId/risk-summary)
+SELECT
+  c.id AS course_id,
+  c.level,
+  c.parallel,
+  COUNT(DISTINCT e."studentId") AS total_estudiantes_activos
+FROM courses c
+INNER JOIN enrollments e ON e."courseId" = c.id
+INNER JOIN students s ON s.id = e."studentId"
+WHERE e.status = 'ACTIVE'
+  AND s."isActive" = true
+GROUP BY c.id, c.level, c.parallel
+ORDER BY c.level, c.parallel;
 ```
 
 Para revisar resumen academico por estudiante desde SQL:
