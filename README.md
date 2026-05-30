@@ -1166,6 +1166,11 @@ frontend/src/
 - Rutas protegidas por token.
 - Boton de cierre de sesion y manejo local de token/usuario.
 - Cliente API centralizado que usa `VITE_API_URL`.
+- Pantallas `Students`, `Courses` y `Subjects` implementadas con tabla, formularios de creacion/edicion, estados de carga/vacio/error reutilizables, busqueda basica y paginacion por `meta`.
+- Integracion de acciones por modulo:
+  - `Students`: `GET`, `POST`, `PATCH`, `PATCH /deactivate`, `PATCH /activate`.
+  - `Courses`: `GET`, `POST`, `PATCH`, `DELETE` (sin desactivacion logica en backend actual).
+  - `Subjects`: `GET`, `POST`, `PATCH`, `PATCH /deactivate`.
 
 ### Scripts utiles frontend
 En `frontend/package.json`:
