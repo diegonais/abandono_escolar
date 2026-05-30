@@ -31,6 +31,7 @@ enum FollowUpType {
 }
 
 enum RiskLevel {
+  NO_RISK
   LOW
   MEDIUM
   HIGH

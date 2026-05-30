@@ -586,6 +586,52 @@ Respuesta esperada:
 }
 ```
 
+## Modulo RiskEngine (backend)
+
+### Roles por accion
+- `ADMIN`, `DIRECTOR`, `DOCENTE`, `SEGUIMIENTO`: evaluar riesgo por estudiante.
+- `ADMIN`, `DIRECTOR`, `SEGUIMIENTO`: ejecutar evaluacion masiva.
+
+### Endpoints disponibles
+- `GET /risk/student/:studentId/evaluate`
+- `POST /risk/evaluate-all`
+
+### Reglas de evaluacion
+- `attendanceIrregular = true` cuando `faltas + atrasos >= 3` en los ultimos 30 dias.
+- `lowAcademicPerformance = true` cuando `promedioGeneral < 51` o `materiasReprobadas >= 2`.
+- `relevantFollowUps = true` cuando `seguimientos >= 2` en los ultimos 60 dias.
+- `SIN_RIESGO`: 0 indicadores activos.
+- `BAJO`: 1 indicador activo.
+- `MEDIO`: 2 indicadores activos.
+- `ALTO`: 3 indicadores activos.
+
+### Ejemplo evaluar un estudiante
+`GET /risk/student/:studentId/evaluate`
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "riskLevel": "MEDIO",
+  "indicators": {
+    "attendanceIrregular": true,
+    "lowAcademicPerformance": true,
+    "relevantFollowUps": false
+  },
+  "details": {
+    "absencesCount": 2,
+    "delaysCount": 1,
+    "averageGrade": 49.75,
+    "failedSubjectsCount": 2,
+    "followUpsCount": 1
+  }
+}
+```
+
+Notas:
+- Cada evaluacion se guarda en la tabla `risk_evaluations`.
+- El detalle adicional queda en la columna JSON `indicators` (incluye banderas y contadores usados por el motor).
+- Puedes ejecutar y probar estos endpoints desde Swagger en `http://localhost:3000/docs` (tag `risk`).
+
 ### Ejemplo registrar calificaciones por lote
 `POST /grades/bulk`
 
@@ -709,6 +755,7 @@ SELECT COUNT(*) FROM attendances;
 SELECT COUNT(*) FROM grades;
 SELECT COUNT(*) FROM student_follow_ups;
 SELECT COUNT(*) FROM risk_criteria;
+SELECT COUNT(*) FROM risk_evaluations;
 ```
 
 Para revisar usuarios con sus roles:
@@ -849,6 +896,27 @@ INNER JOIN students s ON s.id = sfu."studentId"
 INNER JOIN users u ON u.id = sfu."responsibleUserId"
 INNER JOIN roles r ON r.id = u."roleId"
 ORDER BY sfu."followUpDate" DESC, sfu."createdAt" DESC;
+```
+
+Para verificar evaluaciones de riesgo desde TablePlus:
+
+```sql
+SELECT
+  re.id,
+  re."studentId",
+  re."schoolYearId",
+  re."riskLevel",
+  re."riskScore",
+  re."averageGrade",
+  re."totalAbsences",
+  re."evaluatedAt",
+  re.indicators,
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  sy.name AS school_year_name
+FROM risk_evaluations re
+INNER JOIN students s ON s.id = re."studentId"
+INNER JOIN school_years sy ON sy.id = re."schoolYearId"
+ORDER BY re."evaluatedAt" DESC;
 ```
 
 Para revisar resumen academico por estudiante desde SQL:
