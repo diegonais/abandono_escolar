@@ -1,4 +1,5 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
+import { AttendancePage } from "@/pages/attendance-page";
 import { MainLayout } from "@/layouts/main-layout";
 import { CoursesPage } from "@/pages/courses-page";
 import { DashboardPage } from "@/pages/dashboard-page";
@@ -26,7 +27,7 @@ export const appRouter = createBrowserRouter([
               { path: routePaths.students, element: <StudentsPage /> },
               { path: routePaths.courses, element: <CoursesPage /> },
               { path: routePaths.subjects, element: <SubjectsPage /> },
-              { path: routePaths.attendance, element: <PlaceholderPage title="Asistencia" /> },
+              { path: routePaths.attendance, element: <AttendancePage /> },
               { path: routePaths.grades, element: <PlaceholderPage title="Calificaciones" /> },
           { path: routePaths.followUps, element: <PlaceholderPage title="Seguimientos" /> },
           { path: routePaths.alerts, element: <PlaceholderPage title="Alertas" /> },

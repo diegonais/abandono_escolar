@@ -1167,10 +1167,17 @@ frontend/src/
 - Boton de cierre de sesion y manejo local de token/usuario.
 - Cliente API centralizado que usa `VITE_API_URL`.
 - Pantallas `Students`, `Courses` y `Subjects` implementadas con tabla, formularios de creacion/edicion, estados de carga/vacio/error reutilizables, busqueda basica y paginacion por `meta`.
+- Pantalla `Attendance` implementada con:
+  - registro por curso y fecha usando `POST /attendance/bulk`,
+  - carga de estudiantes inscritos activos desde `GET /enrollments/by-course/:courseId`,
+  - control de fecha futura,
+  - consulta con filtros por curso, estudiante y rango de fechas,
+  - resumen visible de faltas y atrasos.
 - Integracion de acciones por modulo:
   - `Students`: `GET`, `POST`, `PATCH`, `PATCH /deactivate`, `PATCH /activate`.
   - `Courses`: `GET`, `POST`, `PATCH`, `DELETE` (sin desactivacion logica en backend actual).
   - `Subjects`: `GET`, `POST`, `PATCH`, `PATCH /deactivate`.
+  - `Attendance`: `GET`, `GET /by-course`, `POST /bulk`.
 
 ### Scripts utiles frontend
 En `frontend/package.json`:
