@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
+import { AlertsModule } from "./alerts/alerts.module";
 import { AttendanceModule } from "./attendance/attendance.module";
 import { AuthModule } from "./auth/auth.module";
 import { CoursesModule } from "./courses/courses.module";
@@ -19,6 +20,7 @@ import { UsersModule } from "./users/users.module";
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
+    AlertsModule,
     AttendanceModule,
     UsersModule,
     SchoolYearsModule,

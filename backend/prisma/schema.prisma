@@ -39,10 +39,10 @@ enum RiskLevel {
 }
 
 enum AlertStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  DISMISSED
+  PENDIENTE
+  EN_REVISION
+  ATENDIDA
+  DESCARTADA
 }
 
 enum AcademicPeriod {

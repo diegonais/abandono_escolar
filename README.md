@@ -632,6 +632,59 @@ Notas:
 - El detalle adicional queda en la columna JSON `indicators` (incluye banderas y contadores usados por el motor).
 - Puedes ejecutar y probar estos endpoints desde Swagger en `http://localhost:3000/docs` (tag `risk`).
 
+## Modulo Alerts (backend)
+
+### Roles por accion
+- `ADMIN`: puede listar, consultar detalle, generar alertas y actualizar estado.
+- `DIRECTOR`, `SEGUIMIENTO`: pueden listar, consultar detalle y actualizar estado.
+- `DOCENTE`: puede listar y consultar alertas (prototipo).
+
+### Endpoints disponibles
+- `GET /alerts`
+- `GET /alerts/:id`
+- `GET /alerts/by-student/:studentId`
+- `PATCH /alerts/:id/status`
+- `POST /alerts/generate/student/:studentId`
+- `POST /alerts/generate/all`
+
+### Estados validos de alerta
+- `PENDIENTE`
+- `EN_REVISION`
+- `ATENDIDA`
+- `DESCARTADA`
+
+### Reglas de negocio
+- La generacion usa el `RiskEngineService`.
+- Si la evaluacion retorna `SIN_RIESGO`, no se crea alerta.
+- Se evita duplicar alertas `PENDIENTE` para el mismo estudiante y mismo nivel de riesgo.
+- Cada alerta guarda: `title`, `description`, `riskLevel`, `status`, `studentId`, `schoolYearId`, `riskEvaluationId` (opcional).
+
+### Flujo recomendado de uso
+`registrar asistencia/calificaciones/seguimiento -> evaluar riesgo -> generar alerta -> revisar alerta en TablePlus`
+
+### Ejemplo generar alerta por estudiante
+`POST /alerts/generate/student/:studentId`
+
+Respuesta posible:
+
+```json
+{
+  "generated": true,
+  "studentId": "UUID_ESTUDIANTE",
+  "message": "Alerta generada correctamente.",
+  "alert": {
+    "id": "UUID_ALERTA",
+    "title": "Alerta preventiva de riesgo MEDIO",
+    "description": "Se detecto riesgo MEDIO para el estudiante por: asistencia irregular, bajo rendimiento academico.",
+    "riskLevel": "MEDIO",
+    "status": "PENDIENTE",
+    "studentId": "UUID_ESTUDIANTE",
+    "schoolYearId": "UUID_GESTION",
+    "riskEvaluationId": "UUID_EVALUACION"
+  }
+}
+```
+
 ### Ejemplo registrar calificaciones por lote
 `POST /grades/bulk`
 
@@ -756,6 +809,7 @@ SELECT COUNT(*) FROM grades;
 SELECT COUNT(*) FROM student_follow_ups;
 SELECT COUNT(*) FROM risk_criteria;
 SELECT COUNT(*) FROM risk_evaluations;
+SELECT COUNT(*) FROM alerts;
 ```
 
 Para revisar usuarios con sus roles:
@@ -917,6 +971,27 @@ FROM risk_evaluations re
 INNER JOIN students s ON s.id = re."studentId"
 INNER JOIN school_years sy ON sy.id = re."schoolYearId"
 ORDER BY re."evaluatedAt" DESC;
+```
+
+Para verificar alertas desde TablePlus:
+
+```sql
+SELECT
+  a.id,
+  a.title,
+  a.description,
+  a."riskLevel",
+  a.status,
+  a."studentId",
+  a."schoolYearId",
+  a."riskEvaluationId",
+  a."createdAt",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  sy.name AS school_year_name
+FROM alerts a
+INNER JOIN students s ON s.id = a."studentId"
+INNER JOIN school_years sy ON sy.id = a."schoolYearId"
+ORDER BY a."createdAt" DESC;
 ```
 
 Para revisar resumen academico por estudiante desde SQL:
