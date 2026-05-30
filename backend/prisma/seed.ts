@@ -316,7 +316,7 @@ async function main() {
             studentId: student.id,
             subjectId: subject.id,
             courseId: assignedCourse.id,
-            period: AcademicPeriod.FIRST_TERM,
+            period: AcademicPeriod.BIMESTRE_1,
           },
         },
         update: { score },
@@ -324,7 +324,7 @@ async function main() {
           studentId: student.id,
           subjectId: subject.id,
           courseId: assignedCourse.id,
-          period: AcademicPeriod.FIRST_TERM,
+          period: AcademicPeriod.BIMESTRE_1,
           score,
         },
       });

@@ -45,9 +45,10 @@ enum AlertStatus {
 }
 
 enum AcademicPeriod {
-  FIRST_TERM
-  SECOND_TERM
-  THIRD_TERM
+  BIMESTRE_1
+  BIMESTRE_2
+  BIMESTRE_3
+  BIMESTRE_4
   FINAL
 }
 

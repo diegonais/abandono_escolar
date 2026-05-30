@@ -5,6 +5,7 @@ import { AttendanceModule } from "./attendance/attendance.module";
 import { AuthModule } from "./auth/auth.module";
 import { CoursesModule } from "./courses/courses.module";
 import { EnrollmentsModule } from "./enrollments/enrollments.module";
+import { GradesModule } from "./grades/grades.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SchoolYearsModule } from "./school-years/school-years.module";
 import { StudentsModule } from "./students/students.module";
@@ -23,6 +24,7 @@ import { UsersModule } from "./users/users.module";
     SubjectsModule,
     StudentsModule,
     EnrollmentsModule,
+    GradesModule,
   ],
   controllers: [AppController],
   providers: [],

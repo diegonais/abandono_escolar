@@ -440,6 +440,119 @@ Respuesta esperada:
 }
 ```
 
+## Modulo Grades (backend)
+
+### Roles por accion
+- `DOCENTE`: registra calificaciones (`POST /grades`, `POST /grades/bulk`).
+- `ADMIN`: registra y corrige calificaciones (`POST`, `POST /bulk`, `PATCH`).
+- `DIRECTOR`: consulta calificaciones y resumen academico.
+- `SEGUIMIENTO`: consulta calificaciones y resumen academico.
+
+### Endpoints disponibles
+- `POST /grades`
+- `POST /grades/bulk`
+- `GET /grades`
+- `GET /grades/by-student/:studentId`
+- `GET /grades/by-course/:courseId`
+- `PATCH /grades/:id`
+- `GET /grades/summary/student/:studentId`
+
+### Periodos academicos validos
+- `BIMESTRE_1`
+- `BIMESTRE_2`
+- `BIMESTRE_3`
+- `BIMESTRE_4`
+- `FINAL`
+
+### Reglas de negocio
+- Nota minima: `0`.
+- Nota maxima: `100`.
+- No se permite duplicar para la combinacion `studentId + subjectId + courseId + period`.
+- En carga masiva (`bulk`) tambien se valida que no haya duplicados dentro del lote.
+
+### Filtros disponibles en listados
+Se aplican en `GET /grades`, `GET /grades/by-student/:studentId` y
+`GET /grades/by-course/:courseId`:
+- `studentId`
+- `subjectId`
+- `courseId`
+- `period`
+
+Ejemplo:
+`GET /grades?courseId=<uuid>&period=BIMESTRE_1`
+
+### Ejemplo registrar calificacion individual
+`POST /grades`
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "subjectId": "UUID_MATERIA",
+  "courseId": "UUID_CURSO",
+  "period": "BIMESTRE_1",
+  "score": 78.5
+}
+```
+
+### Ejemplo registrar calificaciones por lote
+`POST /grades/bulk`
+
+```json
+[
+  {
+    "studentId": "UUID_ESTUDIANTE_1",
+    "subjectId": "UUID_MATERIA_MAT",
+    "courseId": "UUID_CURSO",
+    "period": "BIMESTRE_1",
+    "score": 84
+  },
+  {
+    "studentId": "UUID_ESTUDIANTE_2",
+    "subjectId": "UUID_MATERIA_MAT",
+    "courseId": "UUID_CURSO",
+    "period": "BIMESTRE_1",
+    "score": 49.75
+  }
+]
+```
+
+### Ejemplo corregir calificacion
+`PATCH /grades/:id`
+
+```json
+{
+  "score": 55
+}
+```
+
+### Resumen por estudiante
+Endpoint: `GET /grades/summary/student/:studentId`
+
+Respuesta esperada:
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "promedioGeneral": 58.5,
+  "materiasReprobadas": 1,
+  "notasPorMateria": [
+    {
+      "subjectId": "UUID_MATERIA_MAT",
+      "subjectName": "Matematica",
+      "promedioMateria": 47.5,
+      "estaReprobada": true,
+      "periodos": [
+        {
+          "period": "BIMESTRE_1",
+          "score": 47.5
+        }
+      ]
+    }
+  ],
+  "indicadorBajoRendimiento": true
+}
+```
+
 ## Ejecutar seed inicial (Prisma)
 
 Desde `backend/`:
@@ -467,7 +580,7 @@ El seed crea y actualiza (idempotente) los siguientes datos de prueba:
 - Materias: `Matematica`, `Lenguaje`, `Ciencias Sociales`, `Ciencias Naturales`.
 - 10 estudiantes ficticios con inscripciones.
 - Asistencias de ejemplo.
-- Calificaciones de ejemplo.
+- Calificaciones de ejemplo (periodo `BIMESTRE_1`).
 - Seguimientos de ejemplo.
 - Criterios basicos de riesgo:
   - `faltas >= 3`
@@ -605,6 +718,46 @@ FROM attendances a
 INNER JOIN students s ON s.id = a."studentId"
 INNER JOIN courses c ON c.id = a."courseId"
 ORDER BY a.date DESC, a."createdAt" DESC;
+```
+
+Para verificar calificaciones desde TablePlus:
+
+```sql
+SELECT
+  g.id,
+  g.period,
+  g.score,
+  g."createdAt",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  sub.name AS subject_name,
+  c.level || ' ' || c.parallel AS course_name
+FROM grades g
+INNER JOIN students s ON s.id = g."studentId"
+INNER JOIN subjects sub ON sub.id = g."subjectId"
+INNER JOIN courses c ON c.id = g."courseId"
+ORDER BY g."createdAt" DESC;
+```
+
+Para revisar resumen academico por estudiante desde SQL:
+
+```sql
+WITH notas_por_materia AS (
+  SELECT
+    g."studentId",
+    g."subjectId",
+    sub.name AS subject_name,
+    ROUND(AVG(g.score)::numeric, 2) AS promedio_materia
+  FROM grades g
+  INNER JOIN subjects sub ON sub.id = g."subjectId"
+  WHERE g."studentId" = 'UUID_ESTUDIANTE'
+  GROUP BY g."studentId", g."subjectId", sub.name
+)
+SELECT
+  npm."studentId",
+  ROUND(AVG(npm.promedio_materia)::numeric, 2) AS promedio_general,
+  COUNT(*) FILTER (WHERE npm.promedio_materia < 51) AS materias_reprobadas
+FROM notas_por_materia npm
+GROUP BY npm."studentId";
 ```
 
 Para revisar resumen rapido por estudiante desde SQL:
