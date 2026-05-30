@@ -1107,3 +1107,69 @@ En `backend/package.json`:
 - `npm run prisma:seed`
 - `npm run prisma:studio`
 - `npm run prisma:format`
+
+## Frontend base (React + Vite + TypeScript)
+
+Configuracion inicial implementada en `frontend/`:
+
+- Tailwind CSS activo.
+- `shadcn/ui` configurado (`components.json`, alias `@`, utilidades UI base).
+- React Router para navegacion.
+- TanStack Query para manejo de datos del cliente.
+- Axios para consumo API.
+- Recharts para visualizaciones iniciales.
+
+### Variables de entorno frontend
+En `frontend/.env` o `frontend/.env.example`:
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+### Credenciales de prueba
+Disponibles desde el seed (`backend/prisma/seed.ts`):
+
+- Email: `admin@abandono.test`
+- Password: `Admin123456`
+
+### Estructura inicial frontend
+
+```text
+frontend/src/
+  app/
+  components/
+  features/
+  layouts/
+  lib/
+  pages/
+  routes/
+  services/
+  types/
+```
+
+### Rutas iniciales frontend
+- `/login`
+- `/dashboard`
+- `/students`
+- `/courses`
+- `/subjects`
+- `/attendance`
+- `/grades`
+- `/follow-ups`
+- `/alerts`
+- `/reports`
+
+### Flujo inicial implementado
+- Layout principal con sidebar.
+- Login real contra `POST /auth/login` con guardado de `accessToken` y datos del usuario en `localStorage`.
+- Dashboard conectado a `GET /reports/dashboard` con KPIs y grafico de distribucion de riesgo.
+- Rutas protegidas por token.
+- Boton de cierre de sesion y manejo local de token/usuario.
+- Cliente API centralizado que usa `VITE_API_URL`.
+
+### Scripts utiles frontend
+En `frontend/package.json`:
+
+- `npm run dev`
+- `npm run build`
+- `npm run preview`
