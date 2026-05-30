@@ -1,0 +1,18 @@
+CREATE TYPE "FollowUpType_new" AS ENUM ('ACADEMICO', 'CONDUCTUAL', 'FAMILIAR', 'ECONOMICO', 'SOCIAL', 'OTRO');
+
+ALTER TABLE "student_follow_ups"
+ALTER COLUMN "type" TYPE "FollowUpType_new"
+USING (
+  CASE "type"::text
+    WHEN 'ACADEMIC' THEN 'ACADEMICO'
+    WHEN 'BEHAVIORAL' THEN 'CONDUCTUAL'
+    WHEN 'FAMILY' THEN 'FAMILIAR'
+    WHEN 'SOCIAL' THEN 'SOCIAL'
+    WHEN 'ATTENDANCE' THEN 'OTRO'
+    WHEN 'PSYCHOLOGICAL' THEN 'OTRO'
+  END
+)::"FollowUpType_new";
+
+ALTER TYPE "FollowUpType" RENAME TO "FollowUpType_old";
+ALTER TYPE "FollowUpType_new" RENAME TO "FollowUpType";
+DROP TYPE "FollowUpType_old";

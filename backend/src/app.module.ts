@@ -8,6 +8,7 @@ import { EnrollmentsModule } from "./enrollments/enrollments.module";
 import { GradesModule } from "./grades/grades.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SchoolYearsModule } from "./school-years/school-years.module";
+import { StudentFollowUpsModule } from "./student-follow-ups/student-follow-ups.module";
 import { StudentsModule } from "./students/students.module";
 import { SubjectsModule } from "./subjects/subjects.module";
 import { UsersModule } from "./users/users.module";
@@ -23,6 +24,7 @@ import { UsersModule } from "./users/users.module";
     CoursesModule,
     SubjectsModule,
     StudentsModule,
+    StudentFollowUpsModule,
     EnrollmentsModule,
     GradesModule,
   ],

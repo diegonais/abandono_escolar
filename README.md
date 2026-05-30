@@ -494,6 +494,98 @@ Ejemplo:
 }
 ```
 
+## Modulo StudentFollowUps (backend)
+
+### Roles por accion
+- `ADMIN`, `DIRECTOR`, `SEGUIMIENTO`: pueden crear seguimientos de cualquier tipo.
+- `DOCENTE`: puede crear seguimientos solo de tipo `ACADEMICO` o `CONDUCTUAL`.
+- `ADMIN`, `DIRECTOR`, `DOCENTE`, `SEGUIMIENTO`: pueden consultar, actualizar y eliminar seguimientos.
+
+### Endpoints disponibles
+- `POST /student-follow-ups`
+- `GET /student-follow-ups`
+- `GET /student-follow-ups/by-student/:studentId`
+- `PATCH /student-follow-ups/:id`
+- `DELETE /student-follow-ups/:id`
+- `GET /student-follow-ups/summary/student/:studentId`
+
+### Tipos validos de seguimiento
+- `ACADEMICO`
+- `CONDUCTUAL`
+- `FAMILIAR`
+- `ECONOMICO`
+- `SOCIAL`
+- `OTRO`
+
+### Reglas de negocio
+- `responsibleUserId` se toma del usuario autenticado (JWT), no del body.
+- `studentId` debe existir.
+- Para `DOCENTE`, se rechazan tipos diferentes a `ACADEMICO` y `CONDUCTUAL`.
+
+### Como registrar seguimiento
+1. Hacer login con `POST /auth/login` y copiar `accessToken`.
+2. Usar `Authorization: Bearer <token>`.
+3. Ejecutar `POST /student-follow-ups`:
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "type": "ACADEMICO",
+  "description": "Bajo rendimiento sostenido en matematica.",
+  "actionTaken": "Se acordo plan de refuerzo con tutor.",
+  "followUpDate": "2026-05-30",
+  "nextReviewDate": "2026-06-07"
+}
+```
+
+Nota: `responsibleUserId` no se envia; el backend lo asigna automaticamente desde el token.
+
+### Resumen por estudiante
+Endpoint: `GET /student-follow-ups/summary/student/:studentId`
+
+Respuesta esperada:
+
+```json
+{
+  "studentId": "UUID_ESTUDIANTE",
+  "totalSeguimientos": 4,
+  "totalPorTipo": {
+    "ACADEMICO": 2,
+    "CONDUCTUAL": 1,
+    "FAMILIAR": 0,
+    "ECONOMICO": 0,
+    "SOCIAL": 1,
+    "OTRO": 0
+  },
+  "ultimosSeguimientos": [
+    {
+      "id": "UUID_SEGUIMIENTO",
+      "studentId": "UUID_ESTUDIANTE",
+      "responsibleUserId": "UUID_USUARIO",
+      "type": "ACADEMICO",
+      "description": "Bajo rendimiento sostenido en matematica.",
+      "actionTaken": "Se acordo plan de refuerzo con tutor.",
+      "followUpDate": "2026-05-30T00:00:00.000Z",
+      "nextReviewDate": "2026-06-07T00:00:00.000Z",
+      "student": {
+        "id": "UUID_ESTUDIANTE",
+        "firstName": "Juan",
+        "lastName": "Perez",
+        "ci": "9000001"
+      },
+      "responsibleUser": {
+        "id": "UUID_USUARIO",
+        "fullName": "Administrador del Sistema",
+        "email": "admin@abandono.test",
+        "role": "ADMIN"
+      },
+      "createdAt": "2026-05-30T00:00:00.000Z",
+      "updatedAt": "2026-05-30T00:00:00.000Z"
+    }
+  ]
+}
+```
+
 ### Ejemplo registrar calificaciones por lote
 `POST /grades/bulk`
 
@@ -736,6 +828,27 @@ INNER JOIN students s ON s.id = g."studentId"
 INNER JOIN subjects sub ON sub.id = g."subjectId"
 INNER JOIN courses c ON c.id = g."courseId"
 ORDER BY g."createdAt" DESC;
+```
+
+Para verificar seguimientos estudiantiles desde TablePlus:
+
+```sql
+SELECT
+  sfu.id,
+  sfu.type,
+  sfu.description,
+  sfu."actionTaken",
+  sfu."followUpDate",
+  sfu."nextReviewDate",
+  sfu."createdAt",
+  s."firstName" || ' ' || s."lastName" AS student_name,
+  u."fullName" AS responsible_user_name,
+  r.name AS responsible_role
+FROM student_follow_ups sfu
+INNER JOIN students s ON s.id = sfu."studentId"
+INNER JOIN users u ON u.id = sfu."responsibleUserId"
+INNER JOIN roles r ON r.id = u."roleId"
+ORDER BY sfu."followUpDate" DESC, sfu."createdAt" DESC;
 ```
 
 Para revisar resumen academico por estudiante desde SQL:

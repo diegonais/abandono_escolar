@@ -335,7 +335,7 @@ async function main() {
     const baseDate = buildDate(currentYear, 3, 15 + (index % 4));
     const firstEntry = {
       id: `seed-followup-${index + 1}-1`,
-      type: index % 2 === 0 ? FollowUpType.ATTENDANCE : FollowUpType.ACADEMIC,
+      type: index % 2 === 0 ? FollowUpType.ACADEMICO : FollowUpType.CONDUCTUAL,
       description: `Seguimiento inicial para ${student.firstName} ${student.lastName}`,
       actionTaken: 'Se notifico al tutor y se coordino plan de apoyo.',
       followUpDate: baseDate,
@@ -349,7 +349,7 @@ async function main() {
         firstEntry,
         {
           id: `seed-followup-${index + 1}-2`,
-          type: FollowUpType.FAMILY,
+          type: FollowUpType.FAMILIAR,
           description: `Segundo seguimiento para ${student.firstName} ${student.lastName}`,
           actionTaken: 'Se realizo reunion familiar para reforzar compromisos.',
           followUpDate: buildDate(currentYear, 3, 25 + index),

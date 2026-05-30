@@ -22,12 +22,12 @@ enum AttendanceStatus {
 }
 
 enum FollowUpType {
-  ACADEMIC
-  ATTENDANCE
-  BEHAVIORAL
-  FAMILY
+  ACADEMICO
+  CONDUCTUAL
+  FAMILIAR
+  ECONOMICO
   SOCIAL
-  PSYCHOLOGICAL
+  OTRO
 }
 
 enum RiskLevel {
